@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const categoryController = require('../controllers/categoryController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -18,20 +19,61 @@ const categoryController = require('../controllers/categoryController');
  *     responses:
  *       '200':
  *         description: Una lista de categorías.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                   name:
- *                     type: string
- *       '500':
- *         description: Error del servidor.
  */
 router.get('/', categoryController.getAll);
+
+/**
+ * @swagger
+ * /categories:
+ *   post:
+ *     summary: Crea una nueva categoría
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *           example:
+ *             name: "Sopas"
+ *     responses:
+ *       '201':
+ *         description: Categoría creada con éxito.
+ *       '401':
+ *         description: No autorizado.
+ *       '409':
+ *         description: La categoría ya existe.
+ */
+router.post('/', authMiddleware, categoryController.create);
+
+/**
+ * @swagger
+ * /categories/{id}:
+ *   delete:
+ *     summary: Elimina una categoría
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: El ID de la categoría a eliminar.
+ *     responses:
+ *       '204':
+ *         description: Categoría eliminada con éxito.
+ *       '401':
+ *         description: No autorizado.
+ */
+router.delete('/:id', authMiddleware, categoryController.remove);
 
 module.exports = router;

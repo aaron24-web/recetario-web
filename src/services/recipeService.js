@@ -143,10 +143,73 @@ const deleteRecipe = async (id, userId) => {
   return data; // Devuelve los datos eliminados o null
 };
 
+const addFavoriteRecipe = async (userId, recipeId) => {
+  const { data, error } = await supabase
+    .from('favorite_recipes')
+    .insert({
+      user_id: userId,
+      recipe_id: recipeId,
+    })
+    .select();
+
+  if (error) {
+    // Si el error es por 'duplicate key', significa que ya era favorita.
+    if (error.code === '23505') {
+        throw new Error('La receta ya está en tus favoritos.');
+    }
+    throw new Error(error.message);
+  }
+  return data;
+};
+
+/**
+ * Elimina una receta de la lista de favoritos de un usuario.
+ */
+const removeFavoriteRecipe = async (userId, recipeId) => {
+  const { error } = await supabase
+    .from('favorite_recipes')
+    .delete()
+    .match({ user_id: userId, recipe_id: recipeId });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+};
+
+/**
+ * Obtiene todas las recetas favoritas de un usuario.
+ */
+const getFavoriteRecipes = async (userId) => {
+  const { data, error } = await supabase
+    .from('favorite_recipes')
+    .select(`
+      recipes (
+        id,
+        name,
+        description,
+        image_url,
+        difficulty,
+        categories ( name ),
+        profiles ( username )
+      )
+    `)
+    .eq('user_id', userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  // Extraemos solo el objeto de la receta del resultado
+  return data.map(fav => fav.recipes);
+};
+
+
 module.exports = {
   getAllRecipes,
   getRecipeById,
   createRecipe,
-  updateRecipe, // <-- Exportar nueva función
-  deleteRecipe, // <-- Exportar nueva función
+  updateRecipe, 
+  deleteRecipe,
+  addFavoriteRecipe,
+  removeFavoriteRecipe,
+  getFavoriteRecipes,
 };

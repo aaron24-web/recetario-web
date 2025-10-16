@@ -145,7 +145,7 @@ const deleteRecipe = async (id, userId) => {
 
 const addFavoriteRecipe = async (userId, recipeId) => {
   const { data, error } = await supabase
-    .from('favorite_recipes')
+    .from('user_favorites')
     .insert({
       user_id: userId,
       recipe_id: recipeId,
@@ -167,7 +167,7 @@ const addFavoriteRecipe = async (userId, recipeId) => {
  */
 const removeFavoriteRecipe = async (userId, recipeId) => {
   const { error } = await supabase
-    .from('favorite_recipes')
+    .from('user_favorites')
     .delete()
     .match({ user_id: userId, recipe_id: recipeId });
 
@@ -181,7 +181,7 @@ const removeFavoriteRecipe = async (userId, recipeId) => {
  */
 const getFavoriteRecipes = async (userId) => {
   const { data, error } = await supabase
-    .from('favorite_recipes')
+    .from('user_favorites')
     .select(`
       recipes (
         id,
@@ -190,7 +190,7 @@ const getFavoriteRecipes = async (userId) => {
         image_url,
         difficulty,
         categories ( name ),
-        profiles ( username )
+        profiles:user_id ( username )
       )
     `)
     .eq('user_id', userId);

@@ -197,4 +197,53 @@ router.get('/:id', recipeController.getById);
  */
 router.delete('/:id', authMiddleware, recipeController.remove);
 
+/**
+ * @swagger
+ * /recipes/{id}/favorite:
+ *   post:
+ *     summary: Añade una receta a los favoritos del usuario
+ *     tags: [Favorites]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: El ID de la receta a añadir a favoritos.
+ *     responses:
+ *       '201':
+ *         description: Receta añadida a favoritos.
+ *       '401':
+ *         description: No autorizado.
+ *       '409':
+ *         description: La receta ya está en favoritos.
+ */
+router.post('/:id/favorite', authMiddleware, recipeController.addFavorite);
+
+/**
+ * @swagger
+ * /recipes/{id}/favorite:
+ *   delete:
+ *     summary: Elimina una receta de los favoritos del usuario
+ *     tags: [Favorites]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: El ID de la receta a eliminar de favoritos.
+ *     responses:
+ *       '204':
+ *         description: Receta eliminada de favoritos.
+ *       '401':
+ *         description: No autorizado.
+ */
+router.delete('/:id/favorite', authMiddleware, recipeController.removeFavorite);
+
+
 module.exports = router;

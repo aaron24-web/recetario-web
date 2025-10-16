@@ -72,10 +72,37 @@ const remove = async (req, res) => {
   }
 };
 
+const addFavorite = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const recipeId = req.params.id;
+        await recipeService.addFavoriteRecipe(userId, recipeId);
+        res.status(201).json({ message: 'Receta añadida a favoritos.' });
+    } catch (error) {
+        if (error.message.includes('ya está en tus favoritos')) {
+            return res.status(409).json({ error: error.message }); // 409 Conflict
+        }
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const removeFavorite = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const recipeId = req.params.id;
+        await recipeService.removeFavoriteRecipe(userId, recipeId);
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
   getAll,
   getById,
   create,
-  update, // <-- Exportar nueva función
-  remove, // <-- Exportar nueva función
+  update,
+  remove,
+  addFavorite,
+  removeFavorite,
 };

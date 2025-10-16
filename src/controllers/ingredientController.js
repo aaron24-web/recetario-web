@@ -1,9 +1,9 @@
-const categoryService = require('../services/categoryService');
+const ingredientService = require('../services/ingredientService');
 
 const getAll = async (req, res) => {
   try {
-    const categories = await categoryService.getAllCategories();
-    res.status(200).json(categories);
+    const ingredients = await ingredientService.getAllIngredients();
+    res.status(200).json(ingredients);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -15,12 +15,12 @@ const create = async (req, res) => {
     if (!name) {
       return res.status(400).json({ error: 'El nombre es requerido.' });
     }
-    const newCategory = await categoryService.createCategory(name);
-    res.status(201).json({ message: 'Categoría creada con éxito', category: newCategory });
+    const newIngredient = await ingredientService.createIngredient(name);
+    res.status(201).json({ message: 'Ingrediente creado con éxito', ingredient: newIngredient });
   } catch (error) {
     // Manejar error de nombre duplicado
     if (error.code === '23505') {
-      return res.status(409).json({ error: 'La categoría ya existe.' });
+      return res.status(409).json({ error: 'El ingrediente ya existe.' });
     }
     res.status(500).json({ error: error.message });
   }
@@ -29,12 +29,12 @@ const create = async (req, res) => {
 const remove = async (req, res) => {
   try {
     const { id } = req.params;
-    await categoryService.deleteCategory(id);
+    await ingredientService.deleteIngredient(id);
     res.status(204).send();
   } catch (error) {
     // Check for the specific foreign key violation error code
     if (error.code === '23503') {
-      return res.status(409).json({ error: 'Esta categoría no se puede eliminar porque está en uso en una o más recetas.' });
+      return res.status(409).json({ error: 'Este ingrediente no se puede eliminar porque está en uso en una o más recetas.' });
     }
     res.status(500).json({ error: error.message });
   }
@@ -42,6 +42,6 @@ const remove = async (req, res) => {
 
 module.exports = {
   getAll,
-  create, // <-- Exportar nueva función
-  remove, // <-- Exportar nueva función
+  create,
+  remove,
 };

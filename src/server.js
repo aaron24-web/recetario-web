@@ -2,7 +2,8 @@ const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 const authRoutes = require('./routes/authRoutes');
-const recipeRoutes = require('./routes/recipeRoutes'); // <-- IMPORTAR
+const recipeRoutes = require('./routes/recipeRoutes');
+const categoryRoutes = require('./routes/categoryRoutes'); // <-- IMPORTAR
 
 // Inicialización
 const app = express();
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 
 // Usar las rutas
 app.use('/api/auth', authRoutes);
-app.use('/api/recipes', recipeRoutes); // <-- USAR
+app.use('/api/recipes', recipeRoutes);
+app.use('/api/categories', categoryRoutes); // <-- USAR
 
 module.exports = app;

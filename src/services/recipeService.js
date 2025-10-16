@@ -105,8 +105,48 @@ const createRecipe = async (recipeData, userId) => {
   return newRecipe;
 };
 
+/**
+ * Actualiza una receta existente.
+ * Solo el usuario que creó la receta puede actualizarla.
+ */
+const updateRecipe = async (id, recipeData, userId) => {
+  const { data, error } = await supabase
+    .from('recipes')
+    .update(recipeData)
+    .eq('id', id)
+    .eq('user_id', userId) // <-- ¡Clave de seguridad!
+    .select()
+    .single();
+
+  if (error) {
+    // Si el error es porque no encontró la fila, no es un error de servidor.
+    if (error.code === 'PGRST116') return null;
+    throw new Error(error.message);
+  }
+  return data;
+};
+
+/**
+ * Elimina una receta.
+ * Solo el usuario que creó la receta puede eliminarla.
+ */
+const deleteRecipe = async (id, userId) => {
+  const { data, error } = await supabase
+    .from('recipes')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId); // <-- ¡Clave de seguridad!
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data; // Devuelve los datos eliminados o null
+};
+
 module.exports = {
   getAllRecipes,
   getRecipeById,
   createRecipe,
+  updateRecipe, // <-- Exportar nueva función
+  deleteRecipe, // <-- Exportar nueva función
 };

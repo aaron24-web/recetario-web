@@ -40,8 +40,42 @@ const create = async (req, res) => {
   }
 };
 
+const update = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const updatedRecipe = await recipeService.updateRecipe(id, req.body, userId);
+
+    if (!updatedRecipe) {
+      return res.status(404).json({ error: 'Receta no encontrada o no tienes permiso para editarla.' });
+    }
+
+    res.status(200).json({ message: 'Receta actualizada con éxito', recipe: updatedRecipe });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const remove = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    await recipeService.deleteRecipe(id, userId);
+
+    // No es necesario verificar el resultado, si no lo encuentra no hace nada.
+    // El código 204 significa "éxito, pero no hay contenido que devolver".
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getAll,
   getById,
   create,
+  update, // <-- Exportar nueva función
+  remove, // <-- Exportar nueva función
 };

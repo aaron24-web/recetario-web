@@ -104,6 +104,45 @@ router.post('/', authMiddleware, recipeController.create); // <-- Ruta protegida
 /**
  * @swagger
  * /recipes/{id}:
+ *   put:
+ *     summary: Actualiza una receta existente
+ *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: El ID de la receta a actualizar.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               difficulty:
+ *                 type: string
+ *           example:
+ *             name: "Flan Casero Cremoso"
+ *             difficulty: "Difícil"
+ *     responses:
+ *       '200':
+ *         description: Receta actualizada con éxito.
+ *       '401':
+ *         description: No autorizado.
+ *       '404':
+ *         description: Receta no encontrada o sin permisos.
+ */
+router.put('/:id', authMiddleware, recipeController.update);
+
+/**
+ * @swagger
+ * /recipes/{id}:
  *   get:
  *     summary: Obtiene los detalles de una receta específica
  *     tags: [Recipes]
@@ -134,5 +173,28 @@ router.get('/:id', recipeController.getById);
  *       scheme: bearer
  *       bearerFormat: JWT
  */
+
+/**
+ * @swagger
+ * /recipes/{id}:
+ *   delete:
+ *     summary: Elimina una receta
+ *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: El ID de la receta a eliminar.
+ *     responses:
+ *       '204':
+ *         description: Receta eliminada con éxito.
+ *       '401':
+ *         description: No autorizado.
+ */
+router.delete('/:id', authMiddleware, recipeController.remove);
 
 module.exports = router;

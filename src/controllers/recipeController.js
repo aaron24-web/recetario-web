@@ -2,7 +2,10 @@ const recipeService = require('../services/recipeService');
 
 const getAll = async (req, res) => {
   try {
-    const recipes = await recipeService.getAllRecipes();
+    // req.query contiene los parámetros de la URL (ej. /recipes?categoryId=1)
+    const queryParams = req.query; 
+
+    const recipes = await recipeService.getAllRecipes(queryParams);
     res.status(200).json(recipes);
   } catch (error) {
     res.status(500).json({ error: error.message });

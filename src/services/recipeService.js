@@ -2,19 +2,48 @@ const supabase = require('../config/supabaseClient');
 
 /**
  * Obtiene una lista de todas las recetas con información básica.
+ * Acepta filtros como queryParams.
  */
-const getAllRecipes = async () => {
-  const { data, error } = await supabase
-    .from('recipes')
-    .select(`
-      id,
-      name,
-      description,
-      image_url,
-      difficulty,
-      profiles!user_id ( username ),
-      categories ( name )
-    `);
+const getAllRecipes = async (queryParams) => {
+  let query = supabase.from('recipes');
+
+  // 1. Definimos nuestro 'select' base, incluyendo 'tags'
+  let selectString = `
+    id,
+    name,
+    description,
+    image_url,
+    difficulty,
+    profiles!user_id ( username ),
+    categories ( name ),
+    tags ( name )
+  `;
+
+  // 2. Modificamos el string de 'select' si hay filtros (para forzar el INNER JOIN)
+  if (queryParams.categoryName) {
+    selectString = selectString.replace('categories ( name )', 'categories!inner ( name )');
+  }
+  if (queryParams.tagName) {
+    selectString = selectString.replace('tags ( name )', 'tags!inner ( name )');
+  }
+
+  // 3. Aplicamos el 'select' PRIMERO
+  // Ahora 'query' es un objeto 'select' que SÍ tiene la función .eq()
+  query = query.select(selectString);
+
+  // 4. AHORA aplicamos los filtros (eq)
+  if (queryParams.categoryName) {
+    query = query.eq('categories.name', queryParams.categoryName);
+  }
+  if (queryParams.tagName) {
+    query = query.eq('tags.name', queryParams.tagName);
+  }
+  if (queryParams.categoryId) {
+    query = query.eq('category_id', queryParams.categoryId);
+  }
+
+  // 5. Ejecutamos la consulta final
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(error.message);

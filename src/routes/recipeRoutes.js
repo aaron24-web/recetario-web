@@ -15,11 +15,27 @@ const authMiddleware = require('../middlewares/authMiddleware'); // <-- Importar
  * @swagger
  * /recipes:
  *   get:
- *     summary: Obtiene una lista de todas las recetas
+ *     summary: Obtiene una lista de todas las recetas, opcionalmente filtrada
  *     tags: [Recipes]
+ *     parameters:
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: integer
+ *         description: (Opcional) El ID de la categoría para filtrar.
+ *       - in: query
+ *         name: categoryName
+ *         schema:
+ *           type: string
+ *         description: (Opcional) El nombre de la categoría para filtrar (ej. "Postres").
+ *       - in: query
+ *         name: tagName
+ *         schema:
+ *           type: string
+ *         description: (Opcional) El nombre de la etiqueta para filtrar (ej. "Vegano").
  *     responses:
  *       '200':
- *         description: Una lista de recetas.
+ *         description: Una lista de recetas (filtrada o completa).
  *       '500':
  *         description: Error del servidor.
  */

@@ -15,7 +15,7 @@ const authMiddleware = require('../middlewares/authMiddleware'); // <-- Importar
  * @swagger
  * /recipes:
  *   get:
- *     summary: Obtiene una lista de todas las recetas, opcionalmente filtrada
+ *     summary: Obtiene una lista de recetas, con filtros y paginación
  *     tags: [Recipes]
  *     parameters:
  *       - in: query
@@ -27,15 +27,27 @@ const authMiddleware = require('../middlewares/authMiddleware'); // <-- Importar
  *         name: categoryName
  *         schema:
  *           type: string
- *         description: (Opcional) El nombre de la categoría para filtrar (ej. "Postres").
+ *         description: (Opcional) El nombre de la categoría (ej. "Postres").
  *       - in: query
  *         name: tagName
  *         schema:
  *           type: string
- *         description: (Opcional) El nombre de la etiqueta para filtrar (ej. "Vegano").
+ *         description: (Opcional) El nombre de la etiqueta (ej. "Vegano").
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: (Opcional) El número de página a solicitar.
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: (Opcional) El número de recetas por página.
  *     responses:
  *       '200':
- *         description: Una lista de recetas (filtrada o completa).
+ *         description: Una lista paginada y/o filtrada de recetas.
  *       '500':
  *         description: Error del servidor.
  */

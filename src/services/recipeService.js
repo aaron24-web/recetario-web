@@ -2,12 +2,25 @@ const supabase = require('../config/supabaseClient');
 
 /**
  * Obtiene una lista de todas las recetas con información básica.
- * Acepta filtros como queryParams.
+ * Acepta filtros y paginación.
  */
 const getAllRecipes = async (queryParams) => {
+  // --- INICIO DE LA MODIFICACIÓN (Paginación) ---
+
+  // 1. Establecer valores por defecto para la paginación
+  const limit = parseInt(queryParams.limit, 10) || 10; // Default: 10 items por página
+  const page = parseInt(queryParams.page, 10) || 1; // Default: página 1
+
+  // 2. Calcular el rango (offset)
+  // Supabase usa .range(from, to)
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  // --- FIN DE LA MODIFICACIÓN ---
+
   let query = supabase.from('recipes');
 
-  // 1. Definimos nuestro 'select' base, incluyendo 'tags'
+  // ... (código de selectString y filtros 'categoryName' y 'tagName' existente)
   let selectString = `
     id,
     name,
@@ -19,7 +32,6 @@ const getAllRecipes = async (queryParams) => {
     tags ( name )
   `;
 
-  // 2. Modificamos el string de 'select' si hay filtros (para forzar el INNER JOIN)
   if (queryParams.categoryName) {
     selectString = selectString.replace('categories ( name )', 'categories!inner ( name )');
   }
@@ -27,11 +39,9 @@ const getAllRecipes = async (queryParams) => {
     selectString = selectString.replace('tags ( name )', 'tags!inner ( name )');
   }
 
-  // 3. Aplicamos el 'select' PRIMERO
-  // Ahora 'query' es un objeto 'select' que SÍ tiene la función .eq()
   query = query.select(selectString);
 
-  // 4. AHORA aplicamos los filtros (eq)
+  // ... (código de filtros .eq() existente)
   if (queryParams.categoryName) {
     query = query.eq('categories.name', queryParams.categoryName);
   }
@@ -42,7 +52,13 @@ const getAllRecipes = async (queryParams) => {
     query = query.eq('category_id', queryParams.categoryId);
   }
 
-  // 5. Ejecutamos la consulta final
+  // --- INICIO DE LA MODIFICACIÓN (Aplicar Paginación) ---
+
+  // 5. Aplicamos el rango al final de la consulta
+  query = query.range(from, to);
+
+  // --- FIN DE LA MODIFICACIÓN ---
+
   const { data, error } = await query;
 
   if (error) {

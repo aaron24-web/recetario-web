@@ -33,7 +33,9 @@ const getRecipeById = async (id) => {
       profiles!user_id ( username, avatar_url ),
       categories ( name ),
       steps ( step_number, description ),
-      recipe_ingredients ( quantity, unit, ingredients ( name ) )
+      recipe_ingredients ( quantity, unit, ingredients ( name ) ),
+      comments ( *, profiles (username, avatar_url) ),
+      tags ( id, name )
     `)
     .eq('id', id);
 

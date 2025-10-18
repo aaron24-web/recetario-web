@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const recipeController = require('../controllers/recipeController');
+const tagController = require('../controllers/tagController'); // <-- IMPORTAR
 const authMiddleware = require('../middlewares/authMiddleware'); // <-- Importar el middleware
 
 /**
@@ -100,6 +101,73 @@ router.get('/', recipeController.getAll);
  *         description: Error del servidor.
  */
 router.post('/', authMiddleware, recipeController.create); // <-- Ruta protegida
+
+/**
+ * @swagger
+ * /recipes/{recipeId}/tags:
+ *   post:
+ *     summary: Asigna una etiqueta existente a una receta
+ *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: recipeId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: El ID de la receta.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tagId
+ *             properties:
+ *               tagId:
+ *                 type: integer
+ *                 description: El ID de la etiqueta a asignar.
+ *                 example: 1
+ *     responses:
+ *       '201':
+ *         description: Etiqueta asignada con éxito.
+ *       '401':
+ *         description: No autorizado.
+ *       '409':
+ *         description: La etiqueta ya estaba asignada a esta receta.
+ */
+router.post('/:recipeId/tags', authMiddleware, tagController.assignTag);
+
+/**
+ * @swagger
+ * /recipes/{recipeId}/tags/{tagId}:
+ *   delete:
+ *     summary: Elimina la asignación de una etiqueta a una receta
+ *     tags: [Recipes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: recipeId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: El ID de la receta.
+ *       - in: path
+ *         name: tagId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: El ID de la etiqueta a eliminar de la receta.
+ *     responses:
+ *       '204':
+ *         description: Etiqueta eliminada de la receta con éxito.
+ *       '401':
+ *         description: No autorizado.
+ */
+router.delete('/:recipeId/tags/:tagId', authMiddleware, tagController.unassignTag);
 
 /**
  * @swagger

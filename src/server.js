@@ -5,7 +5,9 @@ const authRoutes = require('./routes/authRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const ingredientRoutes = require('./routes/ingredientRoutes');
-const favoriteRoutes = require('./routes/favoriteRoutes'); // <-- IMPORTAR
+const favoriteRoutes = require('./routes/favoriteRoutes');
+const tagRoutes = require('./routes/tagRoutes');
+const collectionRoutes = require('./routes/collectionRoutes');
 
 // Inicialización
 const app = express();
@@ -26,6 +28,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/ingredients', ingredientRoutes);
-app.use('/api/favorites', favoriteRoutes); // <-- USAR
+app.use('/api/favorites', favoriteRoutes);
+app.use('/api/tags', tagRoutes);
+app.use('/api/collections', collectionRoutes);
 
 module.exports = app;

@@ -9,7 +9,7 @@ const getAllCategories = async () => {
     .select('*');
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -25,7 +25,7 @@ const createCategory = async (name) => {
     .single();
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -40,12 +40,12 @@ const deleteCategory = async (id) => {
     .eq('id', id);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
 };
 
 module.exports = {
   getAllCategories,
-  createCategory, // <-- Exportar nueva función
-  deleteCategory, // <-- Exportar nueva función
+  createCategory,
+  deleteCategory,
 };

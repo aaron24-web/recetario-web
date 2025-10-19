@@ -11,7 +11,7 @@ const registerUser = async (email, password, username) => {
   });
 
   if (authError) {
-    throw new Error(authError.message);
+    throw authError; // <-- CAMBIO
   }
   
   if (!authData.user) {
@@ -31,7 +31,7 @@ const registerUser = async (email, password, username) => {
   if (profileError) {
     // Si falla la creación del perfil, es buena idea borrar el usuario de auth para mantener la consistencia
     await supabase.auth.admin.deleteUser(authData.user.id);
-    throw new Error(profileError.message);
+    throw profileError; // <-- CAMBIO
   }
 
   return profileData;
@@ -48,7 +48,7 @@ const loginUser = async (email, password) => {
   });
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   
   return data;

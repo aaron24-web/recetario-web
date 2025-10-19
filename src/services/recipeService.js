@@ -5,22 +5,15 @@ const supabase = require('../config/supabaseClient');
  * Acepta filtros y paginación.
  */
 const getAllRecipes = async (queryParams) => {
-  // --- INICIO DE LA MODIFICACIÓN (Paginación) ---
-
-  // 1. Establecer valores por defecto para la paginación
-  const limit = parseInt(queryParams.limit, 10) || 10; // Default: 10 items por página
-  const page = parseInt(queryParams.page, 10) || 1; // Default: página 1
-
-  // 2. Calcular el rango (offset)
-  // Supabase usa .range(from, to)
+  // ... (código de paginación)
+  const limit = parseInt(queryParams.limit, 10) || 10;
+  const page = parseInt(queryParams.page, 10) || 1;
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  // --- FIN DE LA MODIFICACIÓN ---
-
   let query = supabase.from('recipes');
 
-  // ... (código de selectString y filtros 'categoryName' y 'tagName' existente)
+  // ... (código de selectString y filtros)
   let selectString = `
     id,
     name,
@@ -41,7 +34,6 @@ const getAllRecipes = async (queryParams) => {
 
   query = query.select(selectString);
 
-  // ... (código de filtros .eq() existente)
   if (queryParams.categoryName) {
     query = query.eq('categories.name', queryParams.categoryName);
   }
@@ -52,17 +44,12 @@ const getAllRecipes = async (queryParams) => {
     query = query.eq('category_id', queryParams.categoryId);
   }
 
-  // --- INICIO DE LA MODIFICACIÓN (Aplicar Paginación) ---
-
-  // 5. Aplicamos el rango al final de la consulta
   query = query.range(from, to);
-
-  // --- FIN DE LA MODIFICACIÓN ---
 
   const { data, error } = await query;
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -85,9 +72,8 @@ const getRecipeById = async (id) => {
     .eq('id', id);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
-  // Devuelve el primer elemento si existe, o null si no hay resultados
   return data && data.length > 0 ? data[0] : null;
 };
 
@@ -103,8 +89,8 @@ const createRecipe = async (recipeData, userId) => {
     prep_time,
     difficulty,
     category_id,
-    ingredients, // Esperamos un array: [{ ingredient_id, quantity, unit }]
-    steps, // Esperamos un array: [{ step_number, description }]
+    ingredients,
+    steps,
   } = recipeData;
 
   // 1. Insertar la receta principal
@@ -123,7 +109,7 @@ const createRecipe = async (recipeData, userId) => {
     .single();
 
   if (recipeError) {
-    throw new Error(recipeError.message);
+    throw recipeError; // <-- CAMBIO
   }
 
   // 2. Preparar y insertar los pasos
@@ -134,8 +120,7 @@ const createRecipe = async (recipeData, userId) => {
   const { error: stepsError } = await supabase.from('steps').insert(stepsToInsert);
 
   if (stepsError) {
-    // En una app real, aquí borraríamos la receta creada para mantener consistencia
-    throw new Error(stepsError.message);
+    throw stepsError; // <-- CAMBIO
   }
 
   // 3. Preparar y insertar los ingredientes
@@ -146,7 +131,7 @@ const createRecipe = async (recipeData, userId) => {
   const { error: ingredientsError } = await supabase.from('recipe_ingredients').insert(ingredientsToInsert);
 
   if (ingredientsError) {
-    throw new Error(ingredientsError.message);
+    throw ingredientsError; // <-- CAMBIO
   }
 
   return newRecipe;
@@ -154,42 +139,42 @@ const createRecipe = async (recipeData, userId) => {
 
 /**
  * Actualiza una receta existente.
- * Solo el usuario que creó la receta puede actualizarla.
  */
 const updateRecipe = async (id, recipeData, userId) => {
   const { data, error } = await supabase
     .from('recipes')
     .update(recipeData)
     .eq('id', id)
-    .eq('user_id', userId) // <-- ¡Clave de seguridad!
+    .eq('user_id', userId)
     .select()
     .single();
 
   if (error) {
-    // Si el error es porque no encontró la fila, no es un error de servidor.
     if (error.code === 'PGRST116') return null;
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
 
 /**
  * Elimina una receta.
- * Solo el usuario que creó la receta puede eliminarla.
  */
 const deleteRecipe = async (id, userId) => {
   const { data, error } = await supabase
     .from('recipes')
     .delete()
     .eq('id', id)
-    .eq('user_id', userId); // <-- ¡Clave de seguridad!
+    .eq('user_id', userId);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
-  return data; // Devuelve los datos eliminados o null
+  return data;
 };
 
+/**
+ * Añade una receta a la lista de favoritos de un usuario.
+ */
 const addFavoriteRecipe = async (userId, recipeId) => {
   const { data, error } = await supabase
     .from('user_favorites')
@@ -200,11 +185,10 @@ const addFavoriteRecipe = async (userId, recipeId) => {
     .select();
 
   if (error) {
-    // Si el error es por 'duplicate key', significa que ya era favorita.
     if (error.code === '23505') {
         throw new Error('La receta ya está en tus favoritos.');
     }
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -219,7 +203,7 @@ const removeFavoriteRecipe = async (userId, recipeId) => {
     .match({ user_id: userId, recipe_id: recipeId });
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
 };
 
@@ -243,9 +227,8 @@ const getFavoriteRecipes = async (userId) => {
     .eq('user_id', userId);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
-  // Extraemos solo el objeto de la receta del resultado
   return data.map(fav => fav.recipes);
 };
 

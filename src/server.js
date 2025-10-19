@@ -8,6 +8,7 @@ const ingredientRoutes = require('./routes/ingredientRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const collectionRoutes = require('./routes/collectionRoutes');
+const errorHandler = require('./middlewares/errorHandler'); // <-- NUEVO: 1. Importar el manejador
 
 // Inicialización
 const app = express();
@@ -31,5 +32,9 @@ app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/collections', collectionRoutes);
+
+// <-- NUEVO: 2. Usar el manejador de errores
+// IMPORTANTE: Debe ir DESPUÉS de todas tus rutas.
+app.use(errorHandler);
 
 module.exports = app;

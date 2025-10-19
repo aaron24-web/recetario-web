@@ -9,7 +9,7 @@ const getAllIngredients = async () => {
     .select('*');
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -25,7 +25,7 @@ const createIngredient = async (name) => {
     .single();
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -40,7 +40,7 @@ const deleteIngredient = async (id) => {
     .eq('id', id);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
 };
 

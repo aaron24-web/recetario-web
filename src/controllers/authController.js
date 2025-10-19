@@ -1,6 +1,7 @@
 const authService = require('../services/authService');
 
-const register = async (req, res) => {
+// --- Función 'register' actualizada para usar el middleware de errores ---
+const register = async (req, res, next) => {
   const { email, password, username } = req.body;
 
   // Validación simple
@@ -12,11 +13,13 @@ const register = async (req, res) => {
     const newUser = await authService.registerUser(email, password, username);
     res.status(201).json({ message: 'Usuario registrado con éxito', user: newUser });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Pasamos el error al middleware (ej. si el usuario ya existe)
+    next(error);
   }
 };
 
-const login = async (req, res) => {
+// --- Función 'login' actualizada para dar la respuesta limpia ---
+const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -24,21 +27,21 @@ const login = async (req, res) => {
   }
 
   try {
-    const { user, session } = await authService.loginUser(email, password);
+    // 1. Obtenemos la sesión completa del servicio
+    const { session } = await authService.loginUser(email, password);
     
-    // Construimos una respuesta limpia
+    // 2. Construimos la respuesta limpia que tú quieres
     const response = {
       message: 'Inicio de sesión exitoso',
-      token: session.access_token,
-      user: {
-        id: user.id,
-        email: user.email,
-      }
+      token: session.access_token, // <-- Extraemos solo el token
     };
 
-    res.status(200).json(response); // <-- Ahora enviamos nuestro objeto limpio
+    // 3. Enviamos solo nuestro objeto 'response'
+    res.status(200).json(response);
 
   } catch (error) {
+    // El error de login (401) es esperado, no es un error del servidor.
+    // Lo manejamos aquí directamente.
     res.status(401).json({ error: 'Credenciales inválidas' });
   }
 };

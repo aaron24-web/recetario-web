@@ -10,7 +10,7 @@ const getCollectionsByUser = async (userId) => {
     .eq('user_id', userId);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -30,7 +30,7 @@ const createCollection = async (name, description, userId) => {
     .single();
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -46,14 +46,8 @@ const deleteCollection = async (collectionId, userId) => {
     .eq('user_id', userId);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
-};
-
-module.exports = {
-  getCollectionsByUser,
-  createCollection,
-  deleteCollection,
 };
 
 /**
@@ -76,7 +70,7 @@ const getCollectionById = async (collectionId, userId) => {
   if (error) {
     // Si el error es porque .single() no encontró nada
     if (error.code === 'PGRST116') return null;
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -93,7 +87,7 @@ const addRecipeToCollection = async (collectionId, recipeId, userId) => {
     .eq('id', collectionId)
     .eq('user_id', userId);
 
-  if (ownerError) throw new Error(ownerError.message);
+  if (ownerError) throw ownerError; // <-- CAMBIO
   if (count === 0) throw new Error('No tienes permiso o la colección no existe.');
 
   // 2. Si es dueño, insertar la receta
@@ -108,7 +102,7 @@ const addRecipeToCollection = async (collectionId, recipeId, userId) => {
 
   if (error) {
     if (error.code === '23505') throw new Error('La receta ya está en esta colección.');
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -125,7 +119,7 @@ const removeRecipeFromCollection = async (collectionId, recipeId, userId) => {
     .eq('id', collectionId)
     .eq('user_id', userId);
 
-  if (ownerError) throw new Error(ownerError.message);
+  if (ownerError) throw ownerError; // <-- CAMBIO
   if (count === 0) throw new Error('No tienes permiso o la colección no existe.');
 
   // 2. Si es dueño, eliminar la receta
@@ -136,7 +130,7 @@ const removeRecipeFromCollection = async (collectionId, recipeId, userId) => {
     .eq('recipe_id', recipeId);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
 };
 
@@ -144,7 +138,7 @@ module.exports = {
   getCollectionsByUser,
   createCollection,
   deleteCollection,
-  getCollectionById, // <-- Exportar nueva función
-  addRecipeToCollection, // <-- Exportar nueva función
-  removeRecipeFromCollection, // <-- Exportar nueva función
+  getCollectionById,
+  addRecipeToCollection,
+  removeRecipeFromCollection,
 };

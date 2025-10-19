@@ -1,15 +1,15 @@
 const categoryService = require('../services/categoryService');
 
-const getAll = async (req, res) => {
+const getAll = async (req, res, next) => {
   try {
     const categories = await categoryService.getAllCategories();
     res.status(200).json(categories);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
-const create = async (req, res) => {
+const create = async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name) {
@@ -18,30 +18,22 @@ const create = async (req, res) => {
     const newCategory = await categoryService.createCategory(name);
     res.status(201).json({ message: 'Categoría creada con éxito', category: newCategory });
   } catch (error) {
-    // Manejar error de nombre duplicado
-    if (error.code === '23505') {
-      return res.status(409).json({ error: 'La categoría ya existe.' });
-    }
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
-const remove = async (req, res) => {
+const remove = async (req, res, next) => {
   try {
     const { id } = req.params;
     await categoryService.deleteCategory(id);
     res.status(204).send();
   } catch (error) {
-    // Check for the specific foreign key violation error code
-    if (error.code === '23503') {
-      return res.status(409).json({ error: 'Esta categoría no se puede eliminar porque está en uso en una o más recetas.' });
-    }
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
 module.exports = {
   getAll,
-  create, // <-- Exportar nueva función
-  remove, // <-- Exportar nueva función
+  create,
+  remove,
 };

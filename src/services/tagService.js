@@ -9,7 +9,7 @@ const getAllTags = async () => {
     .select('*');
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -25,7 +25,7 @@ const createTag = async (name) => {
     .single();
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -40,7 +40,7 @@ const deleteTag = async (id) => {
     .eq('id', id);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
 };
 
@@ -58,11 +58,10 @@ const addTagToRecipe = async (recipeId, tagId) => {
     .single();
 
   if (error) {
-    // Manejar el caso de que la vinculación ya exista
     if (error.code === '23505') {
       throw new Error('Esta etiqueta ya está asignada a la receta.');
     }
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
   return data;
 };
@@ -78,7 +77,7 @@ const removeTagFromRecipe = async (recipeId, tagId) => {
     .eq('tag_id', tagId);
 
   if (error) {
-    throw new Error(error.message);
+    throw error; // <-- CAMBIO
   }
 };
 
@@ -87,5 +86,5 @@ module.exports = {
   createTag,
   deleteTag,
   addTagToRecipe,
-  removeTagFromRecipe, // <-- Exportar nueva función
+  removeTagFromRecipe,
 };

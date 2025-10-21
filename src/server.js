@@ -10,6 +10,7 @@ const tagRoutes = require('./routes/tagRoutes');
 const collectionRoutes = require('./routes/collectionRoutes');
 const errorHandler = require('./middlewares/errorHandler'); // <-- NUEVO: 1. Importar el manejador
 const profileRoutes = require('./routes/profileRoutes');
+const searchRoutes = require('./routes/searchRoutes');
 
 // Inicialización
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/search', searchRoutes);
 
 // <-- NUEVO: 2. Usar el manejador de errores
 // IMPORTANTE: Debe ir DESPUÉS de todas tus rutas.

@@ -233,6 +233,70 @@ const getFavoriteRecipes = async (userId) => {
 };
 
 
+const uploadRecipeImage = async (recipeId, userId, file) => {
+  // 1. Verificar si la receta pertenece al usuario (¡importante por seguridad!)
+  const { data: recipeData, error: ownerError } = await supabase
+    .from('recipes')
+    .select('id')
+    .eq('id', recipeId)
+    .eq('user_id', userId) // Comprueba que el user_id coincida
+    .single();
+
+  if (ownerError || !recipeData) {
+     // Puedes usar un error más específico si quieres que el errorHandler dé un 403 Forbidden o 404 Not Found
+     throw new Error('Receta no encontrada o no tienes permiso para modificarla.');
+  }
+
+  // 2. Crear un nombre de archivo único para evitar colisiones
+  const fileExt = file.originalname.split('.').pop(); // Obtener extensión (jpg, png, etc.)
+  const uniqueFileName = `recipe_${recipeId}_${Date.now()}.${fileExt}`;
+  // Guardaremos las imágenes dentro de una carpeta 'public' en el bucket
+  // Podrías organizarlo por usuario si prefieres: `${userId}/${uniqueFileName}`
+  const filePath = `public/${uniqueFileName}`; 
+
+  // 3. Subir el archivo a Supabase Storage
+  const { error: uploadError } = await supabase.storage
+    .from('recipe-images') // <-- El nombre de tu bucket
+    .upload(filePath, file.buffer, { // file.buffer viene de multer (memoryStorage)
+      contentType: file.mimetype, // Ej: 'image/jpeg', 'image/png'
+      upsert: false, // Para no sobrescribir si ya existe (puedes poner true si prefieres)
+    });
+
+  if (uploadError) {
+    console.error('Error subiendo a Supabase Storage:', uploadError);
+    throw new Error('Error al subir la imagen al almacenamiento.');
+  }
+
+  // 4. Obtener la URL pública de la imagen recién subida
+  const { data: urlData } = supabase.storage
+    .from('recipe-images') // <-- Tu bucket
+    .getPublicUrl(filePath);
+    
+  if (!urlData || !urlData.publicUrl) {
+       // Si esto falla, podrías intentar borrar el archivo subido para limpiar
+       console.error('Error obteniendo URL pública para:', filePath);
+       throw new Error('Imagen subida, pero no se pudo obtener la URL pública.');
+  }
+  const imageUrl = urlData.publicUrl;
+
+
+  // 5. Actualizar la columna 'image_url' de la receta en la base de datos
+  const { data: updatedRecipe, error: updateError } = await supabase
+    .from('recipes')
+    .update({ image_url: imageUrl }) // Guarda la URL completa
+    .eq('id', recipeId)
+    .select() // Devuelve la receta actualizada
+    .single();
+
+  if (updateError) {
+    console.error('Error actualizando receta en DB:', updateError);
+    throw new Error('Imagen subida, pero hubo un error al guardar la URL en la receta.');
+  }
+
+  return updatedRecipe; // Devuelve la receta con la nueva URL de imagen
+};
+
+// --- AL FINAL DEL ARCHIVO ---
 module.exports = {
   getAllRecipes,
   getRecipeById,
@@ -242,4 +306,5 @@ module.exports = {
   addFavoriteRecipe,
   removeFavoriteRecipe,
   getFavoriteRecipes,
+  uploadRecipeImage, // <-- ¡Añade la nueva función aquí!
 };

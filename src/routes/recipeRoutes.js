@@ -1,14 +1,24 @@
+// src/routes/recipeRoutes.js
 const express = require('express');
 const router = express.Router();
 const recipeController = require('../controllers/recipeController');
-const tagController = require('../controllers/tagController'); // <-- IMPORTAR
-const authMiddleware = require('../middlewares/authMiddleware'); // <-- Importar el middleware
+const tagController = require('../controllers/tagController');
+const authMiddleware = require('../middlewares/authMiddleware');
+const multer = require('multer');
+
+// Configuración de Multer (la misma para ambas subidas)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
 
 /**
  * @swagger
  * tags:
- * - name: Recipes
- *   description: Endpoints para gestionar las recetas.
+ *   - name: Recipes
+ *     description: Endpoints para gestionar las recetas.
  */
 
 /**
@@ -16,7 +26,8 @@ const authMiddleware = require('../middlewares/authMiddleware'); // <-- Importar
  * /recipes:
  *   get:
  *     summary: Obtiene una lista de recetas, con filtros y paginación
- *     tags: [Recipes]
+ *     tags:
+ *       - Recipes
  *     parameters:
  *       - in: query
  *         name: categoryId
@@ -58,7 +69,8 @@ router.get('/', recipeController.getAll);
  * /recipes:
  *   post:
  *     summary: Crea una nueva receta
- *     tags: [Recipes]
+ *     tags:
+ *       - Recipes
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -68,74 +80,38 @@ router.get('/', recipeController.getAll);
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               title:
  *                 type: string
  *               description:
  *                 type: string
- *               image_url:
- *                 type: string
- *               prep_time:
+ *               categoryId:
  *                 type: integer
- *               difficulty:
- *                 type: string
- *                 enum: [Fácil, Medio, Difícil]
- *               category_id:
- *                 type: integer
- *               ingredients:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     ingredient_id:
- *                       type: integer
- *                     quantity:
- *                       type: number
- *                     unit:
- *                       type: string
  *               steps:
  *                 type: array
  *                 items:
- *                   type: object
- *                   properties:
- *                     step_number:
- *                       type: integer
- *                     description:
- *                       type: string
+ *                   type: string
  *           example:
- *             name: "Tacos al Pastor"
- *             description: "Deliciosos tacos de cerdo marinado."
- *             image_url: "http://example.com/tacos.jpg"
- *             prep_time: 60
- *             difficulty: "Medio"
- *             category_id: 1
- *             ingredients:
- *               - ingredient_id: 1
- *                 quantity: 500
- *                 unit: "gramos"
- *               - ingredient_id: 2
- *                 quantity: 10
- *                 unit: "unidades"
- *             steps:
- *               - step_number: 1
- *                 description: "Marinar la carne de cerdo."
- *               - step_number: 2
- *                 description: "Cocinar en el trompo."
+ *             title: "Tarta de manzana"
+ *             description: "Una deliciosa receta casera."
+ *             categoryId: 2
+ *             steps: ["Pelar manzanas", "Hornear 45 minutos"]
  *     responses:
  *       '201':
  *         description: Receta creada con éxito.
  *       '401':
- *         description: No autorizado (token inválido o no proporcionado).
+ *         description: No autorizado.
  *       '500':
  *         description: Error del servidor.
  */
-router.post('/', authMiddleware, recipeController.create); // <-- Ruta protegida
+router.post('/', authMiddleware, recipeController.create);
 
 /**
  * @swagger
  * /recipes/{recipeId}/tags:
  *   post:
  *     summary: Asigna una etiqueta existente a una receta
- *     tags: [Recipes]
+ *     tags:
+ *       - Recipes
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -144,27 +120,23 @@ router.post('/', authMiddleware, recipeController.create); // <-- Ruta protegida
  *         schema:
  *           type: integer
  *         required: true
- *         description: El ID de la receta.
+ *         description: ID de la receta.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - tagId
  *             properties:
  *               tagId:
  *                 type: integer
- *                 description: El ID de la etiqueta a asignar.
- *                 example: 1
  *     responses:
- *       '201':
- *         description: Etiqueta asignada con éxito.
+ *       '200':
+ *         description: Etiqueta asignada correctamente.
+ *       '404':
+ *         description: Receta o etiqueta no encontrada.
  *       '401':
  *         description: No autorizado.
- *       '409':
- *         description: La etiqueta ya estaba asignada a esta receta.
  */
 router.post('/:recipeId/tags', authMiddleware, tagController.assignTag);
 
@@ -173,7 +145,210 @@ router.post('/:recipeId/tags', authMiddleware, tagController.assignTag);
  * /recipes/{recipeId}/tags/{tagId}:
  *   delete:
  *     summary: Elimina la asignación de una etiqueta a una receta
- *     tags: [Recipes]
+ *     tags:
+ *       - Recipes
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: recipeId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la receta.
+ *       - in: path
+ *         name: tagId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la etiqueta.
+ *     responses:
+ *       '200':
+ *         description: Etiqueta eliminada correctamente.
+ *       '404':
+ *         description: Receta o etiqueta no encontrada.
+ */
+router.delete('/:recipeId/tags/:tagId', authMiddleware, tagController.unassignTag);
+
+/**
+ * @swagger
+ * /recipes/{id}:
+ *   put:
+ *     summary: Actualiza una receta existente
+ *     tags:
+ *       - Recipes
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la receta a actualizar.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       '200':
+ *         description: Receta actualizada con éxito.
+ *       '404':
+ *         description: Receta no encontrada.
+ */
+router.put('/:id', authMiddleware, recipeController.update);
+
+/**
+ * @swagger
+ * /recipes/{id}:
+ *   get:
+ *     summary: Obtiene los detalles de una receta específica
+ *     tags:
+ *       - Recipes
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la receta.
+ *     responses:
+ *       '200':
+ *         description: Detalles de la receta.
+ *       '404':
+ *         description: Receta no encontrada.
+ */
+router.get('/:id', recipeController.getById);
+
+/**
+ * @swagger
+ * /recipes/{id}:
+ *   delete:
+ *     summary: Elimina una receta
+ *     tags:
+ *       - Recipes
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la receta.
+ *     responses:
+ *       '200':
+ *         description: Receta eliminada correctamente.
+ *       '404':
+ *         description: Receta no encontrada.
+ */
+router.delete('/:id', authMiddleware, recipeController.remove);
+
+/**
+ * @swagger
+ * /recipes/{id}/favorite:
+ *   post:
+ *     summary: Añade una receta a los favoritos del usuario
+ *     tags:
+ *       - Recipes
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la receta.
+ *     responses:
+ *       '200':
+ *         description: Receta añadida a favoritos.
+ *       '401':
+ *         description: No autorizado.
+ */
+router.post('/:id/favorite', authMiddleware, recipeController.addFavorite);
+
+/**
+ * @swagger
+ * /recipes/{id}/favorite:
+ *   delete:
+ *     summary: Elimina una receta de los favoritos del usuario
+ *     tags:
+ *       - Recipes
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID de la receta.
+ *     responses:
+ *       '200':
+ *         description: Receta eliminada de favoritos.
+ *       '401':
+ *         description: No autorizado.
+ */
+router.delete('/:id/favorite', authMiddleware, recipeController.removeFavorite);
+
+/**
+ * @swagger
+ * /recipes/{id}/image:
+ *   post:
+ *     summary: Sube o reemplaza la imagen principal de una receta
+ *     tags:
+ *       - Recipes
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: El ID de la receta.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               recipeImage:
+ *                 type: string
+ *                 format: binary
+ *                 description: El archivo de imagen (jpg, png, etc.).
+ *     responses:
+ *       '200':
+ *         description: Imagen subida y receta actualizada.
+ *       '400':
+ *         description: No se envió archivo o archivo muy grande.
+ *       '401':
+ *         description: No autorizado.
+ *       '403':
+ *         description: Sin permisos para esta receta.
+ *       '404':
+ *         description: Receta no encontrada.
+ *       '500':
+ *         description: Error interno.
+ */
+router.post(
+  '/:id/image',
+  authMiddleware,
+  upload.single('recipeImage'),
+  recipeController.uploadRecipeImage
+);
+
+/**
+ * @swagger
+ * /recipes/{recipeId}/steps/{stepNumber}/image:
+ *   post:
+ *     summary: Sube o reemplaza la imagen para un paso específico de una receta
+ *     tags:
+ *       - Recipes
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -184,82 +359,43 @@ router.post('/:recipeId/tags', authMiddleware, tagController.assignTag);
  *         required: true
  *         description: El ID de la receta.
  *       - in: path
- *         name: tagId
+ *         name: stepNumber
  *         schema:
  *           type: integer
  *         required: true
- *         description: El ID de la etiqueta a eliminar de la receta.
- *     responses:
- *       '204':
- *         description: Etiqueta eliminada de la receta con éxito.
- *       '401':
- *         description: No autorizado.
- */
-router.delete('/:recipeId/tags/:tagId', authMiddleware, tagController.unassignTag);
-
-/**
- * @swagger
- * /recipes/{id}:
- *   put:
- *     summary: Actualiza una receta existente
- *     tags: [Recipes]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: El ID de la receta a actualizar.
+ *         description: El número del paso.
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               stepImage:
  *                 type: string
- *               difficulty:
- *                 type: string
- *           example:
- *             name: "Flan Casero Cremoso"
- *             difficulty: "Difícil"
+ *                 format: binary
+ *                 description: Imagen del paso (jpg, png, etc.).
  *     responses:
  *       '200':
- *         description: Receta actualizada con éxito.
+ *         description: Imagen subida y paso actualizado con éxito.
+ *       '400':
+ *         description: No se envió archivo, archivo muy grande o paso inválido.
  *       '401':
  *         description: No autorizado.
+ *       '403':
+ *         description: Sin permisos para esta receta.
  *       '404':
- *         description: Receta no encontrada o sin permisos.
- */
-router.put('/:id', authMiddleware, recipeController.update);
-
-/**
- * @swagger
- * /recipes/{id}:
- *   get:
- *     summary: Obtiene los detalles de una receta específica
- *     tags: [Recipes]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: El ID de la receta.
- *     responses:
- *       '200':
- *         description: Detalles de la receta.
- *       '404':
- *         description: Receta no encontrada.
+ *         description: Receta o paso no encontrado.
  *       '500':
- *         description: Error del servidor.
+ *         description: Error interno al subir o guardar.
  */
-router.get('/:id', recipeController.getById);
+router.post(
+  '/:recipeId/steps/:stepNumber/image',
+  authMiddleware,
+  upload.single('stepImage'),
+  recipeController.uploadStepImage
+);
 
-// We also need to tell Swagger how to handle the security scheme
 /**
  * @swagger
  * components:
@@ -269,77 +405,5 @@ router.get('/:id', recipeController.getById);
  *       scheme: bearer
  *       bearerFormat: JWT
  */
-
-/**
- * @swagger
- * /recipes/{id}:
- *   delete:
- *     summary: Elimina una receta
- *     tags: [Recipes]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: El ID de la receta a eliminar.
- *     responses:
- *       '204':
- *         description: Receta eliminada con éxito.
- *       '401':
- *         description: No autorizado.
- */
-router.delete('/:id', authMiddleware, recipeController.remove);
-
-/**
- * @swagger
- * /recipes/{id}/favorite:
- *   post:
- *     summary: Añade una receta a los favoritos del usuario
- *     tags: [Favorites]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: El ID de la receta a añadir a favoritos.
- *     responses:
- *       '201':
- *         description: Receta añadida a favoritos.
- *       '401':
- *         description: No autorizado.
- *       '409':
- *         description: La receta ya está en favoritos.
- */
-router.post('/:id/favorite', authMiddleware, recipeController.addFavorite);
-
-/**
- * @swagger
- * /recipes/{id}/favorite:
- *   delete:
- *     summary: Elimina una receta de los favoritos del usuario
- *     tags: [Favorites]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: El ID de la receta a eliminar de favoritos.
- *     responses:
- *       '204':
- *         description: Receta eliminada de favoritos.
- *       '401':
- *         description: No autorizado.
- */
-router.delete('/:id/favorite', authMiddleware, recipeController.removeFavorite);
-
 
 module.exports = router;
